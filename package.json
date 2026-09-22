@@ -1,0 +1,12 @@
+{
+  "name": "break-check",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Photograph a record sleeve and check it against a list of records with a known open drum break.",
+  "scripts": {
+    "start": "serve -s . -l ${PORT:-3000}"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}

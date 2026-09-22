@@ -1,0 +1,14 @@
+{
+  "name": "Break Check",
+  "short_name": "Break Check",
+  "description": "Photograph a record sleeve and check it against 2,140 titles with a known open drum break.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1C1A16",
+  "theme_color": "#1C1A16",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
