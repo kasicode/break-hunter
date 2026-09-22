@@ -310,6 +310,27 @@ body {
   font-size: 12px;
   color: var(--ink-dim);
 }
+.card-confirm {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.card-confirm:hover, .card-confirm:focus-visible {
+  background: var(--mustard);
+  border-color: var(--mustard);
+  color: var(--mustard-ink);
+  outline: none;
+}
 
 .empty {
   margin-top: 24px;
@@ -495,32 +516,26 @@ function renderResults(query) {
   var html = '<div class="results"><div class="results-heading">' +
     (scored[0].s >= 0.6 ? 'Best match' : 'Closest matches') + '</div>';
 
+  var thisUnlock = justUnlockedRank;
+  justUnlockedRank = null;
+
   scored.forEach(function (x, i) {
     var e = x.e;
     var isMatch = x.s >= 0.6 && i === 0;
-    var unlockHtml = '';
-    var freshClass = '';
+    var already = progress.found[e.rank];
+    var isFresh = thisUnlock === e.rank;
+    var unlockHtml;
 
-    if (isMatch) {
-      var already = progress.found[e.rank];
-      if (already) {
-        unlockHtml = '<div class="card-found-before">Found earlier \u2014 ' + already.tier + ', ' + already.points + ' pts</div>';
-      } else {
-        var tier = tierFor(e.copies);
-        var bonus = Math.random() < 0.15;
-        var pts = bonus ? tier.points * 2 : tier.points;
-        progress.found[e.rank] = { tier: tier.label, points: pts };
-        progress.score += pts;
-        saveProgress(progress);
-        renderTally();
-        freshClass = ' fresh';
-        unlockHtml = '<div class="card-unlock"><span class="tier">' + escapeHtml(tier.label) +
-          (bonus ? '<span class="bonus">Bonus dig \u2014 \u00d72</span>' : '') + '</span>' +
-          '<span class="pts">+' + pts + '</span></div>';
-      }
+    if (already) {
+      unlockHtml = '<div class="card-unlock"><span class="tier">' + escapeHtml(already.tier) +
+        (already.bonus ? '<span class="bonus">Bonus dig \u2014 \u00d72</span>' : '') + '</span>' +
+        '<span class="pts">+' + already.points + '</span></div>' +
+        (isFresh ? '' : '<div class="card-found-before">Found earlier</div>');
+    } else {
+      unlockHtml = '<button type="button" class="card-confirm" data-rank="' + e.rank + '">This is the one \u2014 found it</button>';
     }
 
-    html += '<div class="card' + (isMatch ? ' match' : '') + freshClass + '">' +
+    html += '<div class="card' + (isMatch ? ' match' : '') + (isFresh ? ' fresh' : '') + '">' +
       '<div class="card-top">' +
         '<span class="card-rank">No. ' + e.rank + '</span>' +
         (isMatch ? '<span class="card-badge">Match</span>' : (x.s >= 0.45 ? '<span class="card-badge maybe">Possible</span>' : '')) +
@@ -533,6 +548,32 @@ function renderResults(query) {
   });
   html += '</div>';
   area.innerHTML = html;
+
+  var buttons = area.querySelectorAll('.card-confirm');
+  for (var bi = 0; bi < buttons.length; bi++) {
+    buttons[bi].addEventListener('click', function () {
+      confirmFind(parseInt(this.getAttribute('data-rank'), 10));
+    });
+  }
+}
+
+var justUnlockedRank = null;
+function confirmFind(rank) {
+  if (progress.found[rank]) return;
+  var entry = null;
+  for (var i = 0; i < INDEX.length; i++) {
+    if (INDEX[i].rank === rank) { entry = INDEX[i]; break; }
+  }
+  if (!entry) return;
+  var tier = tierFor(entry.copies);
+  var bonus = Math.random() < 0.15;
+  var pts = bonus ? tier.points * 2 : tier.points;
+  progress.found[rank] = { tier: tier.label, points: pts, bonus: bonus };
+  progress.score += pts;
+  saveProgress(progress);
+  renderTally();
+  justUnlockedRank = rank;
+  renderResults(lastQuery);
 }
 
 function escapeHtml(s) {
